@@ -141,3 +141,64 @@ def user_is_ready(user_id):
         return False
 
     return True
+
+
+import datetime
+
+
+# =======================================
+# REGISTRAR OPERACIÓN
+# =======================================
+
+def register_trade(user_id, symbol, entry_price, exit_price, qty, result):
+    """
+    Guarda en la base de datos una operación completada.
+    result = 'tp_hit' o 'sl_hit'
+    """
+    profit_usdt = (exit_price - entry_price) * qty
+
+    trade_data = {
+        "user_id": user_id,
+        "symbol": symbol,
+        "entry_price": entry_price,
+        "exit_price": exit_price,
+        "qty": qty,
+        "profit_usdt": round(profit_usdt, 6),
+        "result": result,
+        "timestamp": datetime.datetime.utcnow()
+    }
+
+    trades_col.insert_one(trade_data)
+    return trade_data
+
+
+# =======================================
+# OBTENER HISTORIAL COMPLETO DEL USUARIO
+# =======================================
+
+def get_user_trades(user_id):
+    """
+    Devuelve todas las operaciones del usuario ordenadas del más reciente al más viejo.
+    """
+    return list(trades_col.find({"user_id": user_id}).sort("timestamp", -1))
+
+
+# =======================================
+# ESTADÍSTICAS BÁSICAS DEL USUARIO
+# =======================================
+
+def get_user_stats(user_id):
+    trades = get_user_trades(user_id)
+
+    total_profit = sum(t["profit_usdt"] for t in trades)
+    total_trades = len(trades)
+    wins = sum(1 for t in trades if t["result"] == "tp_hit")
+    losses = sum(1 for t in trades if t["result"] == "sl_hit")
+
+    return {
+        "total_trades": total_trades,
+        "wins": wins,
+        "losses": losses,
+        "winrate": (wins / total_trades * 100) if total_trades > 0 else 0,
+        "total_profit": round(total_profit, 6)
+    }
