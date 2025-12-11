@@ -37,3 +37,51 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=main_menu
     )
+
+
+# =======================================
+# CONFIGURAR API KEYS
+# =======================================
+
+# Mensaje inicial del botón
+async def config_api(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "🔐 *Configuración de API Keys*\n\n"
+        "Envíame tu *API KEY* de CoinW.",
+        parse_mode="Markdown"
+    )
+    context.user_data["awaiting_api_key"] = True
+
+
+# Recepción de API KEY
+async def receive_api_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    api_key = update.message.text
+
+    context.user_data["api_key"] = api_key
+    context.user_data["awaiting_api_key"] = False
+    context.user_data["awaiting_api_secret"] = True
+
+    await update.message.reply_text(
+        "Perfecto 👍\nAhora envíame tu *API SECRET*.",
+        parse_mode="Markdown"
+    )
+
+
+# Recepción de API SECRET
+async def receive_api_secret(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    api_secret = update.message.text
+
+    api_key = context.user_data.get("api_key")
+
+    save_api_keys(user_id, api_key, api_secret)
+
+    context.user_data["awaiting_api_secret"] = False
+
+    await update.message.reply_text(
+        "🔐 Tus API Keys han sido guardadas *de forma segura y encriptada*.\n\n"
+        "Ya estás un paso más cerca de activar TradingX 🚀",
+        parse_mode="Markdown",
+        reply_markup=main_menu
+    )
