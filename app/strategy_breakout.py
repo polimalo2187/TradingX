@@ -106,3 +106,62 @@ def detect_breakout(symbol, timeframe="1min"):
         "sl": SL_MIN,
         "sl_max": SL_MAX
     }
+
+
+# =======================================
+# CREAR PLAN DE OPERACIÓN (TP / SL)
+# =======================================
+
+def generate_trade_plan(symbol, breakout_data):
+    """
+    Genera un plan completo de operación basado en la señal.
+    """
+    
+    entry_price = breakout_data["close_price"]
+
+    # TP dinámico
+    tp_min = entry_price * (1 + breakout_data["tp"])
+    tp_max = entry_price * (1 + breakout_data["tp_max"])
+
+    # SL dinámico
+    sl_min = entry_price * (1 - breakout_data["sl"])
+    sl_max = entry_price * (1 - breakout_data["sl_max"])
+
+    return {
+        "symbol": symbol,
+        "entry_price": entry_price,
+        "tp_min": round(tp_min, 6),
+        "tp_max": round(tp_max, 6),
+        "sl_min": round(sl_min, 6),
+        "sl_max": round(sl_max, 6),
+        "strength": breakout_data["strength"]
+    }
+
+
+# =======================================
+# FUNCIÓN PRINCIPAL DE ESTRATEGIA
+# (LO QUE EL MOTOR LLAMA DIRECTAMENTE)
+# =======================================
+
+def get_trade_signal(symbol):
+    """
+    Devuelve un objeto final con:
+    - Si hay señal
+    - Plan de operación (TP / SL)
+    - Datos de fuerza
+    """
+
+    breakout = detect_breakout(symbol)
+
+    if not breakout["signal"]:
+        return {
+            "signal": False
+        }
+
+    # Crear plan operativo completo
+    plan = generate_trade_plan(symbol, breakout)
+
+    return {
+        "signal": True,
+        "trade_plan": plan
+    }
