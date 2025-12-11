@@ -75,3 +75,69 @@ def get_api_keys(user_id):
         "api_key": decrypt_text(user["api_key"]),
         "api_secret": decrypt_text(user["api_secret"])
     }
+
+
+# =======================================
+# GUARDAR CAPITAL DEL USUARIO
+# =======================================
+
+def save_user_capital(user_id, capital):
+    users_col.update_one(
+        {"user_id": user_id},
+        {"$set": {"capital": capital}}
+    )
+    return True
+
+
+# =======================================
+# ACTIVAR TRADING PARA EL USUARIO
+# =======================================
+
+def activate_trading(user_id):
+    users_col.update_one(
+        {"user_id": user_id},
+        {"$set": {"status": "active"}}
+    )
+    return True
+
+
+# =======================================
+# DESACTIVAR TRADING PARA EL USUARIO
+# =======================================
+
+def deactivate_trading(user_id):
+    users_col.update_one(
+        {"user_id": user_id},
+        {"$set": {"status": "inactive"}}
+    )
+    return True
+
+
+# =======================================
+# OBTENER DATOS COMPLETOS DEL USUARIO
+# =======================================
+
+def get_user(user_id):
+    return users_col.find_one({"user_id": user_id})
+
+
+# =======================================
+# VERIFICAR SI EL USUARIO ESTÁ LISTO PARA OPERAR
+# =======================================
+
+def user_is_ready(user_id):
+    user = get_user(user_id)
+
+    if not user:
+        return False
+
+    if not user.get("api_key") or not user.get("api_secret"):
+        return False
+
+    if user.get("capital", 0) <= 0:
+        return False
+
+    if user.get("status") != "active":
+        return False
+
+    return True
