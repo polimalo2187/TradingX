@@ -121,3 +121,45 @@ def monitor_trade(position):
         # ============================
 
         time.sleep(2)  # monitoreo cada 2 segundos
+
+
+# =======================================
+# CICLO COMPLETO DE TRADING DEL BOT
+# =======================================
+
+def trading_cycle():
+    """
+    1. Escanea el mercado Spot
+    2. Selecciona mejores pares
+    3. Abre operación en el mejor
+    4. Monitorea operación hasta TP o SL
+    """
+
+    print("🚀 Iniciando ciclo de TradingX...")
+
+    # 1. Escanear mercado para encontrar oportunidades
+    opportunities = scan_market()
+
+    if not opportunities:
+        print("⚪ No se encontraron oportunidades en este ciclo.")
+        return "no_opportunity"
+
+    # 2. Tomar el par más fuerte
+    best = opportunities[0]
+    symbol = best["symbol"]
+    plan = best["trade_plan"]
+
+    print(f"🔥 Mejor oportunidad: {symbol} | Fuerza: {plan['strength']}")
+
+    # 3. Abrir la operación usando el capital del usuario
+    position = open_trade(symbol, plan, USER_TRADING_CAPITAL)
+
+    if not position:
+        print("❌ No se pudo abrir la operación.")
+        return "failed_open"
+
+    # 4. Monitorear operación
+    result = monitor_trade(position)
+
+    print(f"📊 Resultado final de operación: {result}")
+    return result
