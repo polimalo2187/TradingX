@@ -51,3 +51,58 @@ def analyze_candle(candle):
         "body_strength": body_strength,
         "direction": direction
     }
+
+
+# =======================================
+# DETECTAR BREAKOUT (SEÑAL DE ENTRADA)
+# =======================================
+
+def detect_breakout(symbol, timeframe="1min"):
+    """
+    Analiza velas recientes y determina si existe un breakout válido.
+    Devuelve un objeto con datos y recomendación.
+    """
+
+    candles = get_candles(symbol, timeframe, limit=5)
+
+    if len(candles) < 2:
+        return {"signal": False}
+
+    # Tomar la última vela cerrada
+    last_candle = analyze_candle(candles[-1])
+
+    if not last_candle:
+        return {"signal": False}
+
+    # REGLA 1: volumen mínimo para considerar breakout
+    if last_candle["volume"] < BREAKOUT_MIN_VOLUME:
+        return {"signal": False}
+
+    # REGLA 2: cuerpo fuerte (vela de impulso)
+    if last_candle["body_strength"] < BREAKOUT_CANDLE_BODY:
+        return {"signal": False}
+
+    # REGLA 3: breakout debe ser alcista (para Spot)
+    if last_candle["direction"] != "bullish":
+        return {"signal": False}
+
+    # Calcular "fuerza" total
+    strength = (
+        (last_candle["body_strength"] * 0.6) +
+        (last_candle["volume"] / BREAKOUT_MIN_VOLUME * 0.4)
+    )
+
+    # REGLA 4: fuerza mínima total
+    if strength < BREAKOUT_STRENGTH_THRESHOLD:
+        return {"signal": False}
+
+    # Breakout válido: retornamos parámetros
+    return {
+        "signal": True,
+        "strength": strength,
+        "close_price": last_candle["close"],
+        "tp": TP_MIN,
+        "tp_max": TP_MAX,
+        "sl": SL_MIN,
+        "sl_max": SL_MAX
+    }
