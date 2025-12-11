@@ -85,3 +85,89 @@ async def receive_api_secret(update: Update, context: ContextTypes.DEFAULT_TYPE)
         parse_mode="Markdown",
         reply_markup=main_menu
     )
+
+
+# =======================================
+# CONFIGURAR CAPITAL
+# =======================================
+
+async def config_capital(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "💰 *Configuración de Capital*\n\n"
+        "Escríbeme ahora la cantidad de *USDT* que deseas que el bot opere.\n"
+        "Ejemplo: `20`",
+        parse_mode="Markdown"
+    )
+    context.user_data["awaiting_capital"] = True
+
+
+async def receive_capital(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    text = update.message.text
+
+    try:
+        capital = float(text)
+        if capital <= 0:
+            raise ValueError()
+
+        save_user_capital(user_id, capital)
+        context.user_data["awaiting_capital"] = False
+
+        await update.message.reply_text(
+            f"💰 Capital configurado correctamente: *{capital} USDT*\n\n"
+            "Ya puedes activar TradingX cuando estés listo.",
+            parse_mode="Markdown",
+            reply_markup=main_menu
+        )
+
+    except:
+        await update.message.reply_text(
+            "❌ Capital inválido. Por favor escribe un número válido.",
+            parse_mode="Markdown"
+        )
+
+
+# =======================================
+# ACTIVAR TRADING
+# =======================================
+
+async def activate_trading_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+
+    if not user_is_ready(user_id):
+        await update.message.reply_text(
+            "⚠️ No puedes activar el trading todavía.\n\n"
+            "Asegúrate de tener:\n"
+            "• API Keys configuradas\n"
+            "• Capital asignado\n"
+            "• Cuenta CoinW con saldo\n\n"
+            "Inténtalo nuevamente cuando todo esté listo.",
+            parse_mode="Markdown"
+        )
+        return
+
+    activate_trading(user_id)
+
+    await update.message.reply_text(
+        "🚀 *TradingX ha sido ACTIVADO*\n\n"
+        "El bot comenzará a analizar el mercado y ejecutar operaciones automáticamente.",
+        parse_mode="Markdown",
+        reply_markup=main_menu
+    )
+
+
+# =======================================
+# DESACTIVAR TRADING
+# =======================================
+
+async def deactivate_trading_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+
+    deactivate_trading(user_id)
+
+    await update.message.reply_text(
+        "🛑 *TradingX ha sido DESACTIVADO*\n\n"
+        "El bot ya no ejecutará operaciones automáticas.",
+        parse_mode="Markdown",
+        reply_markup=main_menu
+    )
