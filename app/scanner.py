@@ -74,3 +74,39 @@ def select_best_pairs(opportunities):
 
     print(f"⭐ Mejores pares seleccionados: {[p['symbol'] for p in best_pairs]}")
     return best_pairs
+
+
+# =======================================
+# FUNCIÓN FINAL DEL SCANNER (LLAMADA POR EL MOTOR)
+# =======================================
+
+def scan_market():
+    """
+    Función principal del scanner.
+    1. Obtiene pares USDT
+    2. Evalúa oportunidades (Breakout)
+    3. Selecciona los mejores pares
+    4. Devuelve lista final para operar
+    """
+
+    print("🔎 Escaneando mercado Spot de CoinW...")
+
+    # 1. Obtener pares válidos
+    pairs = fetch_pairs()
+    if not pairs:
+        print("❌ No hay pares disponibles para analizar.")
+        return []
+
+    # 2. Evaluar señales de Breakout
+    opportunities = evaluate_pairs(pairs)
+
+    if not opportunities:
+        print("⚪ No se detectaron oportunidades en este ciclo.")
+        return []
+
+    # 3. Seleccionar los mejores pares según fuerza
+    strongest_pairs = select_best_pairs(opportunities)
+
+    print(f"📈 Oportunidades elegidas: {[x['symbol'] for x in strongest_pairs]}")
+
+    return strongest_pairs
