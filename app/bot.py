@@ -171,3 +171,109 @@ async def deactivate_trading_handler(update: Update, context: ContextTypes.DEFAU
         parse_mode="Markdown",
         reply_markup=main_menu
     )
+
+
+# =======================================
+# ESTADO ACTUAL DEL USUARIO
+# =======================================
+
+async def status_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    user = get_user(user_id)
+
+    if not user:
+        await update.message.reply_text("❌ Usuario no encontrado.")
+        return
+
+    status = "🟢 Activo" if user.get("status") == "active" else "🔴 Inactivo"
+    capital = user.get("capital", 0)
+
+    await update.message.reply_text(
+        f"ℹ *Estado Actual*\n\n"
+        f"• Estado del trading: {status}\n"
+        f"• Capital configurado: *{capital} USDT*\n",
+        parse_mode="Markdown"
+    )
+
+
+# =======================================
+# ESTADÍSTICAS DEL USUARIO
+# =======================================
+
+async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    stats = get_user_stats(user_id)
+
+    await update.message.reply_text(
+        "📊 *Tus Estadísticas en TradingX*\n\n"
+        f"• Operaciones totales: {stats['total_trades']}\n"
+        f"• Ganadas (TP): {stats['wins']}\n"
+        f"• Perdidas (SL): {stats['losses']}\n"
+        f"• Winrate: {stats['winrate']:.2f}%\n"
+        f"• Ganancia total: {stats['total_profit']} USDT\n",
+        parse_mode="Markdown"
+    )
+
+
+# =======================================
+# MANEJADOR DE MENÚ PRINCIPAL
+# =======================================
+
+async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+
+    if text == "📌 Configurar API Keys":
+        return await config_api(update, context)
+
+    if text == "💰 Configurar Capital":
+        return await config_capital(update, context)
+
+    if text == "🚀 Activar Trading":
+        return await activate_trading_handler(update, context)
+
+    if text == "🛑 Desactivar Trading":
+        return await deactivate_trading_handler(update, context)
+
+    if text == "📊 Mis Estadísticas":
+        return await stats_handler(update, context)
+
+    if text == "ℹ Estado Actual":
+        return await status_handler(update, context)
+
+
+# =======================================
+# MANEJO DE RECEPCIÓN DE MENSAJES
+# =======================================
+
+async def message_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_data = context.user_data
+
+    # API KEY
+    if user_data.get("awaiting_api_key"):
+        return await receive_api_key(update, context)
+
+    # API SECRET
+    if user_data.get("awaiting_api_secret"):
+        return await receive_api_secret(update, context)
+
+    # CAPITAL
+    if user_data.get("awaiting_capital"):
+        return await receive_capital(update, context)
+
+    # MENÚ PRINCIPAL
+    return await menu_handler(update, context)
+
+
+# =======================================
+# INICIALIZACIÓN DEL BOT
+# =======================================
+
+def run_bot():
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
+    # Handlers
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_router))
+
+    print("🤖 TradingX está corriendo en Telegram...")
+    app.run_polling()
