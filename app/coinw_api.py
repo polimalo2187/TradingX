@@ -60,3 +60,79 @@ def make_request(method: str, endpoint: str, params=None):
     except Exception as e:
         print(f"❌ Error de conexión con CoinW: {e}")
         return None
+
+    # ========================================
+# OBTENER TODOS LOS PARES DISPONIBLES SPOT
+# ========================================
+
+def get_spot_pairs():
+    """
+    Devuelve una lista de pares disponibles en CoinW Spot.
+    """
+    endpoint = "/api/v1/public/symbol/list"
+    response = make_request("GET", endpoint)
+
+    if not response or response.get("code") != 0:
+        print("❌ No se pudieron obtener los pares de Spot.")
+        return []
+
+    return [item["symbol"] for item in response["data"]]
+
+
+# ========================================
+# OBTENER PRECIO ACTUAL DE UN PAR
+# ========================================
+
+def get_price(symbol: str):
+    """
+    Obtiene el precio actual del par solicitado.
+    """
+    endpoint = "/api/v1/public/market/ticker"
+    params = {"symbol": symbol}
+
+    response = make_request("GET", endpoint, params)
+
+    if not response or response.get("code") != 0:
+        print(f"❌ No se pudo obtener el precio de {symbol}")
+        return None
+
+    return float(response["data"]["lastPrice"])
+
+
+# ========================================
+# OBTENER VELAS (CANDLESTICKS)
+# ========================================
+
+def get_candles(symbol: str, timeframe="1min", limit=50):
+    """
+    Obtiene velas para análisis técnico.
+    timeframes válidos: 1min, 3min, 5min, 15min, etc.
+    """
+    endpoint = "/api/v1/public/market/kline"
+
+    params = {
+        "symbol": symbol,
+        "limit": limit,
+        "type": timeframe
+    }
+
+    response = make_request("GET", endpoint, params)
+
+    if not response or response.get("code") != 0:
+        print(f"❌ Error al obtener velas de {symbol}")
+        return []
+
+    # Formato CoinW: [timestamp, open, high, low, close, volume]
+    return response["data"]
+
+
+# ========================================
+# VALIDAR SI UN PAR EXISTE EN SPOT
+# ========================================
+
+def pair_exists(symbol: str):
+    """
+    Valida si el par existe en CoinW Spot.
+    """
+    pairs = get_spot_pairs()
+    return symbol in pairs
