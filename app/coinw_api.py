@@ -136,3 +136,84 @@ def pair_exists(symbol: str):
     """
     pairs = get_spot_pairs()
     return symbol in pairs
+
+
+# ========================================
+# CREAR ORDEN DE COMPRA (MARKET)
+# ========================================
+
+def place_market_buy(symbol: str, quantity: float):
+    """
+    Crea una orden de compra Market en CoinW Spot.
+    """
+    endpoint = "/api/v1/private/trade/order"
+    
+    params = {
+        "symbol": symbol,
+        "side": "BUY",
+        "type": "MARKET",
+        "qty": quantity
+    }
+
+    signed_params = sign_request(params)
+    response = make_request("POST", endpoint, signed_params)
+
+    if not response or response.get("code") != 0:
+        print(f"❌ Error al ejecutar compra en {symbol}: {response}")
+        return None
+
+    print(f"🟢 Compra ejecutada en {symbol}: {response['data']}")
+    return response["data"]
+
+
+# ========================================
+# CREAR ORDEN DE VENTA (MARKET)
+# ========================================
+
+def place_market_sell(symbol: str, quantity: float):
+    """
+    Crea una orden de venta Market en CoinW Spot.
+    """
+    endpoint = "/api/v1/private/trade/order"
+
+    params = {
+        "symbol": symbol,
+        "side": "SELL",
+        "type": "MARKET",
+        "qty": quantity
+    }
+
+    signed_params = sign_request(params)
+    response = make_request("POST", endpoint, signed_params)
+
+    if not response or response.get("code") != 0:
+        print(f"❌ Error al ejecutar venta en {symbol}: {response}")
+        return None
+
+    print(f"🔴 Venta ejecutada en {symbol}: {response['data']}")
+    return response["data"]
+
+
+# ========================================
+# CONSULTAR ORDEN
+# ========================================
+
+def get_order_status(order_id: str, symbol: str):
+    """
+    Consulta el estado de una orden específica.
+    """
+    endpoint = "/api/v1/private/trade/order/detail"
+
+    params = {
+        "symbol": symbol,
+        "orderId": order_id
+    }
+
+    signed_params = sign_request(params)
+    response = make_request("GET", endpoint, signed_params)
+
+    if not response or response.get("code") != 0:
+        print(f"❌ No se pudo obtener orden {order_id}")
+        return None
+
+    return response["data"]
